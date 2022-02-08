@@ -1,0 +1,74 @@
+title: Smart Autotune Thermostat
+views:
+  - title: SAT
+    path: smart-autotune-thermostaat
+    badges: []
+    cards:
+      - type: entities
+        entities:
+          - entity: sensor.primary_thermostat_temperature
+            name: Thermostat setting
+            icon: mdi:thermometer
+          - entity: sensor.primary_thermostat_current_temperature
+            name: Thermostat current temperature
+            icon: mdi:thermometer
+          - entity: sensor.outside_temperature
+            name: Actual outside temperature
+            icon: mdi:thermometer
+          - entity: sensor.primary_thermostat_hvac
+            icon: mdi:thermometer
+      - type: grid
+        cards:
+          - type: history-graph
+            entities:
+              - entity: sensor.derivative_primary
+            refresh_interval: 0
+            title: Last hour
+            hours_to_show: 1
+        columns: 1
+        square: false
+      - type: entities
+        entities:
+          - entity: sensor.heating_curve_state
+          - entity: sensor.thermostat_heating_curve
+          - entity: sensor.derivative_primary
+          - entity: sensor.derivative_heating_curve
+      - type: entities
+        entities:
+          - entity: sensor.heating_system
+          - entity: sensor.overheat
+      - type: entities
+        entities:
+          - entity: sensor.custom_heating_curve
+          - entity: sensor.custom_primary_thermostat_control_setpoint_formula
+          - entity: sensor.custom_primary_thermostat_control_setpoint
+          - entity: sensor.custom_max_control_setpoint
+          - entity: sensor.custom_thermostat_control_setpoint
+          - entity: sensor.otgw_boiler_flow_water_temperature
+            name: Boiler temperature
+          - entity: binary_sensor.otgw_flame
+            name: Flame status
+        state_color: true
+      - type: entities
+        entities:
+          - entity: input_select.heating_system
+          - entity: input_number.heating_curve_move
+          - entity: input_select.starting_heating_curve
+          - entity: input_select.transition_heating_curve
+          - entity: input_select.heating_curve
+      - type: entities
+        entities:
+          - entity: sensor.start_time
+            icon: mdi:timer
+          - entity: sensor.transition_time
+            icon: mdi:timer
+          - entity: sensor.float_time
+            icon: mdi:timer
+          - entity: sensor.transition_smooth
+            icon: mdi:timer
+      - type: entities
+        entities:
+          - entity: binary_sensor.control_setpoint_synchro
+          - entity: binary_sensor.ch_synchro
+          - entity: sensor.custom_thermostat_ch_command
+        state_color: true
