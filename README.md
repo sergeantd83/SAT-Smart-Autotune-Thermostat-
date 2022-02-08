@@ -4,14 +4,14 @@ This is a beta version of the SAT.
 
 Prerequisites:
 
-1. Home Assistant Server with MQTT broker enabled
+1. Home Assistant Server with MQTT broker enabled.
 2. OTGW https://otgw.tclcode.com/
 3. OTGW-firmware https://github.com/rvdbreemen/OTGW-firmware
 
 Installation:
 
-1. use Packages in HA https://www.home-assistant.io/docs/configuration/packages/ and add the SAT.yaml inside the packages folder.
-2. Restart Home Assistant
+1. Use Packages in HA https://www.home-assistant.io/docs/configuration/packages/ and add the SAT.yaml inside the packages folder.
+2. Restart Home Assistant.
 
 Tuning:
 
