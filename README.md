@@ -15,4 +15,4 @@ Installation:
 
 Tuning:
 
-Currently there is no documentation about SAT project but you can join discord server https://discord.gg/TcmTg6BT and you will get the help you need.
+Currently there is no documentation about SAT project but you can join the OTGW-firmware discord server https://discord.gg/TcmTg6BT and you will get the help you need.
