@@ -7,6 +7,7 @@ Prerequisites:
 1. Home Assistant Server with MQTT broker enabled.
 2. OTGW https://otgw.tclcode.com/
 3. OTGW-firmware https://github.com/rvdbreemen/OTGW-firmware
+4. HASmartThermostat custom component from HACS
 
 Installation:
 
