@@ -1,153 +1,55 @@
-#################################################################
-###########################  SAT v2.1.6 alpha 008  ##############
-#### changed 2022-02-15 Richard_HA
-#################################################################
-# changes:
-# Overheat_sensor new controller type
-# Derivative sensor Time_window changed > 01:00:00
-# Control_setpoint sensor changed due to new overheat controller
-# Heating_curve sensor changed: to auto increase/decrease values based on difference in roomtemperature
-# Heating_Curve Fix: fault in formula
-#################################################################
-
-##########SENSORS################################################
-
+##################################################################
+##########################  SAT v2.1.7  ##########################
+#################### Changed by Sergeant "D" #####################
+######################### 2022 - 03 - 01 #########################
+##################################################################
 sensor:
-  - platform: template ##Primary Thermostat Temperature##
+  - platform: template  ##Primary Thermostat Temperature##
     sensors:
       primary_thermostat_temperature:
-        value_template: "{{ states('sensor.otgw_room_setpoint') }}" ## Replace your_primary_thermostat with your current entity ##
+        value_template: "{{ state_attr('climate.opentherm_thermostat', 'temperature') }}"    ## Replace your_primary_thermostat with your current entity ##
         friendly_name: Primary Thermostat Temperature
-  - platform: template ##Primary Thermostat Current Temperature##
+        unit_of_measurement: °C
+  - platform: template  ##Primary Thermostat Current Temperature##
     sensors:
       primary_thermostat_current_temperature:
-        value_template: "{{ states('sensor.otgw_room_temperature') }}" ## Replace your_primary_thermostat with your current entity##
-        friendly_name: Primary Thermostat Temperature
-  - platform: template ##Primary Thermostat HVAC##
+        value_template: "{{ state_attr('climate.opentherm_thermostat', 'current_temperature') }}"    ## Replace your_primary_thermostat with your current entity##
+        friendly_name: Primary Thermostat Current Temperature
+        unit_of_measurement: °C
+  - platform: template  ## Heat Curve ##
+    sensors:
+      heat_curve:
+        value_template: "{{ state_attr('climate.living_room_virtual', 'pid_e') }}"  
+        friendly_name: Heat Curve
+        unit_of_measurement: °C
+  - platform: template  ## P ##
+    sensors:
+      proportional:
+        value_template: "{{ state_attr('climate.living_room_virtual', 'pid_p') }}"  
+        friendly_name: P
+        unit_of_measurement: °C
+  - platform: template  ## I ##
+    sensors:
+      integral:
+        value_template: "{{ state_attr('climate.living_room_virtual', 'pid_i') }}"  
+        friendly_name: I
+        unit_of_measurement: °C
+  - platform: template  ## D ##
+    sensors:
+      derivative:
+        value_template: "{{ state_attr('climate.living_room_virtual', 'pid_d') }}"  
+        friendly_name: D
+        unit_of_measurement: °C
+  - platform: template  ##Primary Thermostat HVAC##
     sensors:
       primary_thermostat_hvac:
-        value_template: "{{ state_attr('climate.otgw_thermostat', 'hvac_action') }}" ## Replace your_primary_thermostat with your current entity##
+        value_template: "{{ state_attr('climate.opentherm_thermostat', 'hvac_action') }}"    ## Replace your_primary_thermostat with your current entity##
         friendly_name: Primary Thermostat HVAC
-  - platform: template ##Outside Temperature Sensor##
+  - platform: template  ##Outside Temperature Sensor##
     sensors:
       outside_temperature:
-        value_template: "{{ states('sensor.otgw_outside_temperature') }}" ##If you have your own local temperature sensor replace with the correct entity ( Default temperature by OTGW )##
+        value_template: "{{ states('sensor.outside_temperature') }}"    ##If you have your own local temperature sensor replace with the correct entity ( Default temperature by OTGW )##
         friendly_name: Outside Temperature Sensor
-  - platform: template ##Heating Curve State##
-    sensors:
-      heating_curve_state:
-        value_template: >
-          {% if ( states("sensor.primary_thermostat_temperature") | float(default=22) - states("sensor.primary_thermostat_current_temperature") | float(default=22) ) | float >= 0.3 %}
-            Start Mode
-          {% elif ( states("sensor.primary_thermostat_temperature") | float(default=22) - states("sensor.primary_thermostat_current_temperature") | float(default=22) ) | float >= 0.05 %}
-            Transition Mode
-          {% elif ( states("sensor.primary_thermostat_temperature") | float(default=22) - states("sensor.primary_thermostat_current_temperature") | float(default=22) ) | float <= 0.04 %}
-            Float Mode
-          {% else %}
-            Off
-          {% endif %}
-        friendly_name: Heating Curve State
-
-  # - platform: template ##Heating Curve Sensor## (not used anymore default state change)
-  #   sensors:
-  # thermostat_heating_curve:
-  #   value_template: >
-  #     {% if is_state("input_select.heating_system", "Radiators (Low Temperatures)") and ( states("sensor.primary_thermostat_temperature") | float(default=22) - states("sensor.primary_thermostat_current_temperature") | float(default=22) ) | float >= 0.3 %}
-  #       {{ "%.1f"%(states("input_select.starting_heating_curve") | float ) | float }}
-  #     {% elif ( states("sensor.primary_thermostat_temperature") | float(default=22) - states("sensor.primary_thermostat_current_temperature") | float(default=22) ) | float >= 0.3 %}
-  #       {{ states("input_select.starting_heating_curve") }}
-  #     {% elif ( states("sensor.primary_thermostat_temperature") | float(default=22) - states("sensor.primary_thermostat_current_temperature") | float(default=22) ) | float >= 0.05 %}
-  #       {{ states("input_select.transition_heating_curve") }}
-  #     {% elif ( states("sensor.primary_thermostat_temperature") | float(default=22) - states("sensor.primary_thermostat_current_temperature") | float(default=22) ) | float <= 0.04 %}
-  #       {{ states("input_select.heating_curve") }}
-  #     {% else %}
-  #       {{ states("input_select.heating_curve") }}
-  #     {% endif %}
-  #   friendly_name: Thermostat Heating Curve
-
-  - platform: template ##Heating Curve Sensor latest version ##
-    sensors:
-        thermostat_heating_curve:
-          value_template: >
-            {% if ( states("sensor.primary_thermostat_temperature") | float(default=22) - states("sensor.primary_thermostat_current_temperature") | float(default=22) ) | float >= 0.13 %}
-            {{ "%.1f"%(states("input_select.heating_curve") | float * 1.5) }}
-            {% elif ( states("sensor.primary_thermostat_temperature") | float(default=22) - states("sensor.primary_thermostat_current_temperature") | float(default=22) ) | float >= 0.11 %}
-            {{ "%.1f"%(states("input_select.heating_curve") | float * 1.4) }}
-            {% elif ( states("sensor.primary_thermostat_temperature") | float(default=22) - states("sensor.primary_thermostat_current_temperature") | float(default=22) ) | float >= 0.09 %}
-            {{ "%.1f"%(states("input_select.heating_curve") | float * 1.3) }}
-            {% elif ( states("sensor.primary_thermostat_temperature") | float(default=22) - states("sensor.primary_thermostat_current_temperature") | float(default=22) ) | float >= 0.07 %}
-            {{ "%.1f"%(states("input_select.heating_curve") | float * 1.2) }}
-            {% elif ( states("sensor.primary_thermostat_temperature") | float(default=22) - states("sensor.primary_thermostat_current_temperature") | float(default=22) ) | float >= 0.05 %}
-            {{ "%.1f"%(states("input_select.heating_curve") | float * 1.1) }}
-            {% else %}
-            {{ states("input_select.heating_curve") }}
-            {% endif %}
-          friendly_name: Thermostat Heating Curve
-
-#   - platform: template ##Heating Curve Sensor latest version ##
-#     sensors:
-#         thermostat_heating_curve:
-#           value_template: >
-#             {% set TroomCurr = states('sensor.primary_thermostat_current_temperature') | float(default=22) %}
-#             {% set TroomSetp = states('sensor.primary_thermostat_temperature') | float(default=22) %}
-#             {% set HeatingCurve = states('input_select.heating_curve') | float(default=22)%}
-#             {% set StartingCurve = states('input_select.starting_heating_curve') | float(default=22) %}
-
-#             {% set CorrectionCurve = (((StartingCurve / (HeatingCurve))/100 * (TroomSetp - TroomCurr))/0.1666) | float |round(1) |abs %}
-    
-#             {% if CorrectionCurve == (HeatingCurve + CorrectionCurve) %}
-#             {{ HeatingCurve  | round(1)}}
-#             {% elif (CorrectionCurve + HeatingCurve) == StartingCurve or (TroomSetp - TroomCurr) >= 2 %}
-#             {{ (StartingCurve + 0.2) | round(1) }}
-#             {% else%}
-#             {% set NewHC = (HeatingCurve + CorrectionCurve) | round(1) %}
-#             {{NewHC}}
-#             {%endif%}
-#           friendly_name: Thermostat Heating Curve
-
-  - platform: derivative ##Derivative Primary Thermostat##
-    source: sensor.primary_thermostat_current_temperature
-    name: Derivative Primary
-    round: 4
-    unit_time: h
-    time_window: "01:00:00"
-
-  - platform: template ##Hierarchy Derivative##
-    sensors:
-      hierarchy_derivative:
-        value_template: >
-          {% if is_state("sensor.primary_thermostat_hvac", "heating") and states("sensor.derivative_primary") | float(default=0) >= - 10 and states("sensor.derivative_primary") | float(default=0) <= 10 %}
-            {{ states("sensor.derivative_primary") | float(default=0) }}
-          {% else %}
-            0
-          {% endif %}
-        friendly_name: Hierarchy Derivative
-        unit_of_measurement: °C/h
-  - platform: template ##Hierarchy Mode##
-    sensors:
-      hierarchy_mode:
-        value_template: >
-          {% if is_state("sensor.primary_thermostat_hvac", "heating") and states("sensor.derivative_primary") | float(default=0) >= - 10 and states("sensor.derivative_primary") | float(default=0) <= 10 %}
-            Primary Thermostat
-          {% else %}
-            0
-          {% endif %}
-        friendly_name: Hierarchy Mode
-  - platform: template ##Derivative Sensor##
-    sensors:
-      derivative_heating_curve:
-        value_template: >
-          {% if  is_state("sensor.heating_curve_state", "Start Mode" ) and states("sensor.hierarchy_derivative") | float(default=0) >= - 10 and states("sensor.hierarchy_derivative") | float(default=0) <= 10 %}
-            {{ - ( states("input_select.starting_heating_curve") | float * states("sensor.hierarchy_derivative") | float(default=0)) }}
-          {% elif  is_state("sensor.heating_curve_state", "Transition Mode" ) and states("sensor.hierarchy_derivative") | float(default=0) >= - 3 and states("sensor.hierarchy_derivative") | float(default=0) <= 3 %}
-            {{ - ( states("input_select.transition_heating_curve") | float * ( states("sensor.hierarchy_derivative") | float(default=0) - states("sensor.transition_smooth") | float(default=0))) }}
-          {% elif  is_state("sensor.heating_curve_state", "Float Mode" ) and states("sensor.hierarchy_derivative") | float(default=0) >= - 1 and states("sensor.hierarchy_derivative") | float(default=0) <= 1 %}
-            {{ - ( states("input_select.heating_curve") | float * states("sensor.hierarchy_derivative") | float(default=0)) }}
-          {% else %}
-            0
-          {% endif %}
-        friendly_name: Derivative Heating Curve
-        unit_of_measurement: °C
   - platform: template ##Heating System##
     sensors:
       heating_system:
@@ -161,165 +63,104 @@ sensor:
           {% else %}
             0
           {% endif %}
-        unit_of_measurement: °C
+        friendly_name: Heating System
+        unit_of_measurement: °C 
 
-  ###################################################################################################
-  ## OVERHEAT SENSOR
-  ##
-  ## changes
-  ## \\ changed min and max value for overheat to -20 / +20
-  ## ceated a new format for readability
-  ###################################################################################################
+##################################### CS CALCULATION ########################################################################################        
 
-  - platform: template ##Overheat##
-    sensors:
-      overheat:
-        friendly_name: "Overheat"
-        value_template: >
-          {% if states('sensor.overheat') not in ['unknown', 'unavailable'] %}
-          {% set DerPrim = (states('sensor.derivative_primary')| float(default=0.01) |abs) %}
-          {% else %}
-          {% set DerPrim = 0.2 %}
-          {% endif %}
 
-          {% set TroomCurr = states('sensor.primary_thermostat_current_temperature') | float(default=22) %}
-          {% set TroomSetp = states('sensor.primary_thermostat_temperature') | float(default=22) %}
-          
-          {% if (TroomSetp - TroomCurr) == 0 %}
-          {% set K = 0.1 %}
-          {% else %}
-          {% set K = (TroomSetp-TroomCurr) %}
-          {% endif %}
-
-          {% set d = ((K/DerPrim)*60) %} 
-          {% set T = (DerPrim) %}
-          {% set P = 0.1/(1.2 * T) / (K * d) %}
-          {% set corr = 0 %}
-          {% set Ti = 0.42 * d %}
-          {% set Td = 0.5 * d %}
-          {% set overheat = (((P + Ti + Td) | round(2))/10) %}
-
-          {% if overheat > 10  %}
-          {{ 10 }}
-          {%elif overheat < -10 %}
-          {{ -10 }}
-          {% else %}
-          {{ overheat }}
-          {% endif%}
-          
   - platform: template ##Heating Curve##
     sensors:
-      custom_heating_curve:
+      heating_curve_value:
         value_template: >
-          {% if is_state("sensor.thermostat_heating_curve", "0.1") %}{{ "%.1f"%( states("input_number.heating_curve_move") | float - states("sensor.heating_system") | float + 36.4 - ( 0.00495 * (states("sensor.outside_temperature") | float(default=15)**2 )) - ( 0.32 * states("sensor.outside_temperature") | float(default=15) ) + states("sensor.derivative_heating_curve") | float(default=0)) | float}}
-          {% elif is_state("sensor.thermostat_heating_curve", "0.2") %}{{ "%.1f"%( states("input_number.heating_curve_move") | float - states("sensor.heating_system") | float + 37.7 - ( 0.0052 * (states("sensor.outside_temperature") | float(default=15)**2 )) - ( 0.38 * states("sensor.outside_temperature") | float(default=15) ) + states("sensor.derivative_heating_curve") | float(default=0)) | float}}
-          {% elif is_state("sensor.thermostat_heating_curve", "0.3") %}{{ "%.1f"%( states("input_number.heating_curve_move") | float - states("sensor.heating_system") | float + 39.0 - ( 0.00545 * (states("sensor.outside_temperature") | float(default=15)**2 )) - ( 0.44 * states("sensor.outside_temperature") | float(default=15) ) + states("sensor.derivative_heating_curve") | float(default=0)) | float}}
-          {% elif is_state("sensor.thermostat_heating_curve", "0.4") %}{{ "%.1f"%( states("input_number.heating_curve_move") | float - states("sensor.heating_system") | float + 40.3 - ( 0.0057 * (states("sensor.outside_temperature") | float(default=15)**2 )) - ( 0.5 * states("sensor.outside_temperature") | float(default=15) ) + states("sensor.derivative_heating_curve") | float(default=0)) | float}}
-          {% elif is_state("sensor.thermostat_heating_curve", "0.5") %}{{ "%.1f"%( states("input_number.heating_curve_move") | float - states("sensor.heating_system") | float + 41.6 - ( 0.00595 * (states("sensor.outside_temperature") | float(default=15)**2 )) - ( 0.56 * states("sensor.outside_temperature") | float(default=15) ) + states("sensor.derivative_heating_curve") | float(default=0)) | float}}
-          {% elif is_state("sensor.thermostat_heating_curve", "0.6") %}{{ "%.1f"%( states("input_number.heating_curve_move") | float - states("sensor.heating_system") | float + 43.1 - ( 0.0067 * (states("sensor.outside_temperature") | float(default=15)**2 )) - ( 0.62 * states("sensor.outside_temperature") | float(default=15) ) + states("sensor.derivative_heating_curve") | float(default=0)) | float}}
-          {% elif is_state("sensor.thermostat_heating_curve", "0.7") %}{{ "%.1f"%( states("input_number.heating_curve_move") | float - states("sensor.heating_system") | float + 44.6 - ( 0.00745 * (states("sensor.outside_temperature") | float(default=15)**2 )) - ( 0.68 * states("sensor.outside_temperature") | float(default=15) ) + states("sensor.derivative_heating_curve") | float(default=0)) | float}}
-          {% elif is_state("sensor.thermostat_heating_curve", "0.8") %}{{ "%.1f"%( states("input_number.heating_curve_move") | float - states("sensor.heating_system") | float + 46.1 - ( 0.0082 * (states("sensor.outside_temperature") | float(default=15)**2 )) - ( 0.74 * states("sensor.outside_temperature") | float(default=15) ) + states("sensor.derivative_heating_curve") | float(default=0)) | float}}
-          {% elif is_state("sensor.thermostat_heating_curve", "0.9") %}{{ "%.1f"%( states("input_number.heating_curve_move") | float - states("sensor.heating_system") | float + 47.6 - ( 0.00895 * (states("sensor.outside_temperature") | float(default=15)**2 )) - ( 0.8 * states("sensor.outside_temperature") | float(default=15) ) + states("sensor.derivative_heating_curve") | float(default=0)) | float}}
-          {% elif is_state("sensor.thermostat_heating_curve", "1.0") %}{{ "%.1f"%( states("input_number.heating_curve_move") | float - states("sensor.heating_system") | float + 49.1 - ( 0.0097 * (states("sensor.outside_temperature") | float(default=15)**2 )) - ( 0.86 * states("sensor.outside_temperature") | float(default=15) ) + states("sensor.derivative_heating_curve") | float(default=0)) | float}}
-          {% elif is_state("sensor.thermostat_heating_curve", "1.1") %}{{ "%.1f"%( states("input_number.heating_curve_move") | float - states("sensor.heating_system") | float + 50.8 - ( 0.01095 * (states("sensor.outside_temperature") | float(default=15)**2 )) - ( 0.92 * states("sensor.outside_temperature") | float(default=15) ) + states("sensor.derivative_heating_curve") | float(default=0)) | float}}
-          {% elif is_state("sensor.thermostat_heating_curve", "1.2") %}{{ "%.1f"%( states("input_number.heating_curve_move") | float - states("sensor.heating_system") | float + 52.5 - ( 0.0122 * (states("sensor.outside_temperature") | float(default=15)**2 )) - ( 0.98 * states("sensor.outside_temperature") | float(default=15) ) + states("sensor.derivative_heating_curve") | float(default=0)) | float}}
-          {% elif is_state("sensor.thermostat_heating_curve", "1.3") %}{{ "%.1f"%( states("input_number.heating_curve_move") | float - states("sensor.heating_system") | float + 54.2 - ( 0.01345 * (states("sensor.outside_temperature") | float(default=15)**2 )) - ( 1.04 * states("sensor.outside_temperature") | float(default=15) ) + states("sensor.derivative_heating_curve") | float(default=0)) | float}}
-          {% elif is_state("sensor.thermostat_heating_curve", "1.4") %}{{ "%.1f"%( states("input_number.heating_curve_move") | float - states("sensor.heating_system") | float + 55.9 - ( 0.0147 * (states("sensor.outside_temperature") | float(default=15)**2 )) - ( 1.1 * states("sensor.outside_temperature") | float(default=15) ) + states("sensor.derivative_heating_curve") | float(default=0)) | float}}
-          {% elif is_state("sensor.thermostat_heating_curve", "1.5") %}{{ "%.1f"%( states("input_number.heating_curve_move") | float - states("sensor.heating_system") | float + 57.5 - ( 0.0157 * (states("sensor.outside_temperature") | float(default=15)**2 )) - ( 1.16 * states("sensor.outside_temperature") | float(default=15) ) + states("sensor.derivative_heating_curve") | float(default=0)) | float}}
-          {% elif is_state("sensor.thermostat_heating_curve", "1.6") %}{{ "%.1f"%( states("input_number.heating_curve_move") | float - states("sensor.heating_system") | float + 59.4 - ( 0.01644 * (states("sensor.outside_temperature") | float(default=15)**2 )) - ( 1.24 * states("sensor.outside_temperature") | float(default=15) ) + states("sensor.derivative_heating_curve") | float(default=0)) | float}}
-          {% elif is_state("sensor.thermostat_heating_curve", "1.7") %}{{ "%.1f"%( states("input_number.heating_curve_move") | float - states("sensor.heating_system") | float + 61.3 - ( 0.01718 * (states("sensor.outside_temperature") | float(default=15)**2 )) - ( 1.32 * states("sensor.outside_temperature") | float(default=15) ) + states("sensor.derivative_heating_curve") | float(default=0)) | float}}
-          {% elif is_state("sensor.thermostat_heating_curve", "1.8") %}{{ "%.1f"%( states("input_number.heating_curve_move") | float - states("sensor.heating_system") | float + 63.2 - ( 0.01792 * (states("sensor.outside_temperature") | float(default=15)**2 )) - ( 1.4 * states("sensor.outside_temperature") | float(default=15) ) + states("sensor.derivative_heating_curve") | float(default=0)) | float}}
-          {% elif is_state("sensor.thermostat_heating_curve", "1.9") %}{{ "%.1f"%( states("input_number.heating_curve_move") | float - states("sensor.heating_system") | float + 65.1 - ( 0.01866 * (states("sensor.outside_temperature") | float(default=15)**2 )) - ( 1.48 * states("sensor.outside_temperature") | float(default=15) ) + states("sensor.derivative_heating_curve") | float(default=0)) | float}}
-          {% elif is_state("sensor.thermostat_heating_curve", "2.0") %}{{ "%.1f"%( states("input_number.heating_curve_move") | float - states("sensor.heating_system") | float + 67.0 - ( 0.0194 * (states("sensor.outside_temperature") | float(default=15)**2 )) - ( 1.56 * states("sensor.outside_temperature") | float(default=15) ) + states("sensor.derivative_heating_curve") | float(default=0)) | float}}
-          {% elif is_state("sensor.thermostat_heating_curve", "2.1") %}{{ "%.1f"%( states("input_number.heating_curve_move") | float - states("sensor.heating_system") | float + 69.1 - ( 0.0197 * (states("sensor.outside_temperature") | float(default=15)**2 )) - ( 1.66 * states("sensor.outside_temperature") | float(default=15) ) + states("sensor.derivative_heating_curve") | float(default=0)) | float}}
-          {% elif is_state("sensor.thermostat_heating_curve", "2.2") %}{{ "%.1f"%( states("input_number.heating_curve_move") | float - states("sensor.heating_system") | float + 71.2 - ( 0.01995 * (states("sensor.outside_temperature") | float(default=15)**2 )) - ( 1.76 * states("sensor.outside_temperature") | float(default=15) ) + states("sensor.derivative_heating_curve") | float(default=0)) | float}}
-          {% elif is_state("sensor.thermostat_heating_curve", "2.3") %}{{ "%.1f"%( states("input_number.heating_curve_move") | float - states("sensor.heating_system") | float + 73.3 - ( 0.0202 * (states("sensor.outside_temperature") | float(default=15)**2 )) - ( 1.86 * states("sensor.outside_temperature") | float(default=15) ) + states("sensor.derivative_heating_curve") | float(default=0)) | float}}
-          {% elif is_state("sensor.thermostat_heating_curve", "2.4") %}{{ "%.1f"%( states("input_number.heating_curve_move") | float - states("sensor.heating_system") | float + 75.4 - ( 0.02045 * (states("sensor.outside_temperature") | float(default=15)**2 )) - ( 1.96 * states("sensor.outside_temperature") | float(default=15) ) + states("sensor.derivative_heating_curve") | float(default=0)) | float}}
-          {% elif is_state("sensor.thermostat_heating_curve", "2.5") %}{{ "%.1f"%( states("input_number.heating_curve_move") | float - states("sensor.heating_system") | float + 77.5 - ( 0.02007 * (states("sensor.outside_temperature") | float(default=15)**2 )) - ( 2.06 * states("sensor.outside_temperature") | float(default=15) ) + states("sensor.derivative_heating_curve") | float(default=0)) | float}}
-          {% elif is_state("sensor.thermostat_heating_curve", "2.6") %}{{ "%.1f"%( states("input_number.heating_curve_move") | float - states("sensor.heating_system") | float + 79.8 - ( 0.02045 * (states("sensor.outside_temperature") | float(default=15)**2 )) - ( 2.18 * states("sensor.outside_temperature") | float(default=15) ) + states("sensor.derivative_heating_curve") | float(default=0)) | float}}
-          {% elif is_state("sensor.thermostat_heating_curve", "2.7") %}{{ "%.1f"%( states("input_number.heating_curve_move") | float - states("sensor.heating_system") | float + 82.1 - ( 0.0202 * (states("sensor.outside_temperature") | float(default=15)**2 )) - ( 2.3 * states("sensor.outside_temperature") | float(default=15) ) + states("sensor.derivative_heating_curve") | float(default=0)) | float}}
-          {% elif is_state("sensor.thermostat_heating_curve", "2.8") %}{{ "%.1f"%( states("input_number.heating_curve_move") | float - states("sensor.heating_system") | float + 84.4 - ( 0.01995 * (states("sensor.outside_temperature") | float(default=15)**2 )) - ( 2.42 * states("sensor.outside_temperature") | float(default=15) ) + states("sensor.derivative_heating_curve") | float(default=0)) | float}}
-          {% elif is_state("sensor.thermostat_heating_curve", "2.9") %}{{ "%.1f"%( states("input_number.heating_curve_move") | float - states("sensor.heating_system") | float + 86.7 - ( 0.0197 * (states("sensor.outside_temperature") | float(default=15)**2 )) - ( 2.54 * states("sensor.outside_temperature") | float(default=15) ) + states("sensor.derivative_heating_curve") | float(default=0)) | float}}
-          {% elif is_state("sensor.thermostat_heating_curve", "3.0") %}{{ "%.1f"%( states("input_number.heating_curve_move") | float - states("sensor.heating_system") | float + 89.0 - ( 0.01945 * (states("sensor.outside_temperature") | float(default=15)**2 )) - ( 2.66 * states("sensor.outside_temperature") | float(default=15) ) + states("sensor.derivative_heating_curve") | float(default=0)) | float}}
+          {% set OT = states("sensor.outside_temperature") | float(default=15) %}
+          {% set CurveMove = states("input_number.heating_curve_move") | float %}
+          {% set System = states("sensor.heating_system") | float %}
+          {% set HC = states("input_select.heating_curve") | float %}
+          {% if HC == 0.1 %}
+            {{ "%.1f"%( CurveMove - System + 36.4 - ( 0.00495 * OT**2 ) - ( 0.32 *  OT)) | float}}
+          {% elif HC == 0.2 %}
+            {{ "%.1f"%( CurveMove - System + 37.7 - ( 0.0052 * OT**2 ) - ( 0.38 *  OT)) | float}}
+          {% elif HC == 0.3 %}
+            {{ "%.1f"%( CurveMove - System + 39.0 - ( 0.00545 * OT**2 ) - ( 0.44 *  OT)) | float}}
+          {% elif HC == 0.4 %}
+            {{ "%.1f"%( CurveMove - System + 40.3 - ( 0.0057 * OT**2 ) - ( 0.5 *  OT)) | float}}
+          {% elif HC == 0.5 %}
+            {{ "%.1f"%( CurveMove - System + 41.6 - ( 0.00595 * OT**2 ) - ( 0.56 *  OT)) | float}}
+          {% elif HC == 0.6 %}
+            {{ "%.1f"%( CurveMove - System + 43.1 - ( 0.0067 * OT**2 ) - ( 0.62 *  OT)) | float}}
+          {% elif HC == 0.7 %}
+            {{ "%.1f"%( CurveMove - System + 44.6 - ( 0.00745 * OT**2 ) - ( 0.68 *  OT)) | float}}
+          {% elif HC == 0.8 %}
+            {{ "%.1f"%( CurveMove - System + 46.1 - ( 0.0082 * OT**2 ) - ( 0.74 *  OT)) | float}}
+          {% elif HC == 0.9 %}
+            {{ "%.1f"%( CurveMove - System + 47.6 - ( 0.00895 * OT**2 ) - ( 0.8 *  OT)) | float}}
+          {% elif HC == 1.0 %}
+            {{ "%.1f"%( CurveMove - System + 49.1 - ( 0.0097 * OT**2 ) - ( 0.86 *  OT)) | float}}
+          {% elif HC == 1.1 %}
+            {{ "%.1f"%( CurveMove - System + 50.8 - ( 0.01095 * OT**2 ) - ( 0.92 *  OT)) | float}}
+          {% elif HC == 1.2 %}
+            {{ "%.1f"%( CurveMove - System + 52.5 - ( 0.0122 * OT**2 ) - ( 0.98 *  OT)) | float}}
+          {% elif HC == 1.3 %}
+            {{ "%.1f"%( CurveMove - System + 54.2 - ( 0.01345 * OT**2 ) - ( 1.04 *  OT)) | float}}
+          {% elif HC == 1.4 %}
+            {{ "%.1f"%( CurveMove - System + 55.9 - ( 0.0147 * OT**2 ) - ( 1.1 *  OT)) | float}}
+          {% elif HC == 1.5 %}
+            {{ "%.1f"%( CurveMove - System + 57.5 - ( 0.0157 * OT**2 ) - ( 1.16 *  OT)) | float}}
+          {% elif HC == 1.6 %}
+            {{ "%.1f"%( CurveMove - System + 59.4 - ( 0.01644 * OT**2 ) - ( 1.24 *  OT)) | float}}
+          {% elif HC == 1.7 %}
+            {{ "%.1f"%( CurveMove - System + 61.3 - ( 0.01718 * OT**2 ) - ( 1.32 *  OT)) | float}}
+          {% elif HC == 1.8 %}
+            {{ "%.1f"%( CurveMove - System + 63.2 - ( 0.01792 * OT**2 ) - ( 1.4 *  OT)) | float}}
+          {% elif HC == 1.9 %}
+            {{ "%.1f"%( CurveMove - System + 65.1 - ( 0.01866 * OT**2 ) - ( 1.48 *  OT)) | float}}
+          {% elif HC == 2.0 %}
+            {{ "%.1f"%( CurveMove - System + 67.0 - ( 0.0194 * OT**2 ) - ( 1.56 *  OT)) | float}}
+          {% elif HC == 2.1 %}
+            {{ "%.1f"%( CurveMove - System + 69.1 - ( 0.0197 * OT**2 ) - ( 1.66 *  OT)) | float}}
+          {% elif HC == 2.2 %}
+            {{ "%.1f"%( CurveMove - System + 71.2 - ( 0.01995 * OT**2 ) - ( 1.76 *  OT)) | float}}
+          {% elif HC == 2.3 %}
+            {{ "%.1f"%( CurveMove - System + 73.3 - ( 0.0202 * OT**2 ) - ( 1.86 *  OT)) | float}}
+          {% elif HC == 2.4 %}
+            {{ "%.1f"%( CurveMove - System + 75.4 - ( 0.02045 * OT**2 ) - ( 1.96 *  OT)) | float}}
+          {% elif HC == 2.5 %}
+            {{ "%.1f"%( CurveMove - System + 77.5 - ( 0.02007 * OT**2 ) - ( 2.06 *  OT)) | float}}
+          {% elif HC == 2.6 %}
+            {{ "%.1f"%( CurveMove - System + 79.8 - ( 0.02045 * OT**2 ) - ( 2.18 *  OT)) | float}}
+          {% elif HC == 2.7 %}
+            {{ "%.1f"%( CurveMove - System + 82.1 - ( 0.0202 * OT**2 ) - ( 2.3 *  OT)) | float}}
+          {% elif HC == 2.8 %}
+            {{ "%.1f"%( CurveMove - System + 84.4 - ( 0.01995 * OT**2 ) - ( 2.42 *  OT)) | float}}
+          {% elif HC == 2.9 %}
+            {{ "%.1f"%( CurveMove - System + 86.7 - ( 0.0197 * OT**2 ) - ( 2.54 *  OT)) | float}}
+          {% elif HC == 3.0 %}
+            {{ "%.1f"%( CurveMove - System + 89.0 - ( 0.01945 * OT**2 ) - ( 2.66 *  OT)) | float}}
           {% endif %}
-        friendly_name: Custom Heating Curve
+        friendly_name: Heating Curve Value
         unit_of_measurement: °C
 
-  ###################################################################################################
-  ## Primary Thermostat Control Setpoint Formula
-  ##
-  ## changes made:
-  ##
-  #####################################################################################################
-
-  # - platform: template ##Primary Thermostat Control Setpoint Formula##
-  #   sensors:
-  #     custom_primary_thermostat_control_setpoint_formula:
-  #       value_template: '{{ "%.f"%( states("sensor.custom_heating_curve") | float + ( states("sensor.primary_thermostat_temperature") | float(default=22) - 20 ) + (states("sensor.thermostat_heating_curve")| float * ( 1 - states("sensor.derivative_primary")| float(default=0.001) ) * ( states("sensor.primary_thermostat_temperature") | float(default=22) - states("sensor.primary_thermostat_current_temperature") | float(default=22))))|float }}'
-  #       friendly_name: Primary Thermostat Control Setpoint Formula
-  #       unit_of_measurement: °C
-
-  - platform: template ##Primary Thermostat Control Setpoint Formula##
-    sensors:
-      custom_primary_thermostat_control_setpoint_formula:
-        value_template: '{{ "%.f"%( states("sensor.custom_heating_curve") | float +  states("sensor.overheat") | float(default=0.1)) }}'
-        friendly_name: Primary Thermostat Control Setpoint Formula
-        unit_of_measurement: °C
-
-  - platform: template ##Primary_Thermostat Control Setpoint##
-    sensors:
-      custom_primary_thermostat_control_setpoint:
-        value_template: >
-          {% if states("sensor.custom_primary_thermostat_control_setpoint_formula") | float < 10 %}
-            10.0
-          {% elif states("sensor.custom_primary_thermostat_control_setpoint_formula") | float >= 10 and states("sensor.custom_primary_thermostat_control_setpoint_formula") | float <= 75 %}
-            {{states("sensor.custom_primary_thermostat_control_setpoint_formula") | float}}
-          {% elif states("sensor.custom_primary_thermostat_control_setpoint_formula") | float > 75 %}
-            75.0
-          {% endif %}
-        friendly_name: Custom Primary Thermostat Control Setpoint
-        unit_of_measurement: °C
-  - platform: template ##Max Control Setpoint##
-    sensors:
-      custom_max_control_setpoint:
-        value_template: >
-          {% if states("sensor.custom_primary_thermostat_control_setpoint") | float < 1000 %}
-            {{ states("sensor.custom_primary_thermostat_control_setpoint") | float }}
-          {% else %}
-            {{ states("sensor.custom_primary_thermostat_control_setpoint") | float }}
-          {% endif %}
-        friendly_name: Custom Max Control Setpoint
-        unit_of_measurement: °C
-## Custom Thermostat Control Setpoint ##
-# changes: inserted extra elif to validate if thermostat went into night-shedule temperature setting
-##  {% elif (states("primary_thermostat_current_temperature" - states("primary_thermostat_temperature"))  | float >= 4 %} 
-##  0
-  - platform: template ##Custom Thermostat Control Setpoint##
+  - platform: template ##Primary Thermostat Control Setpoint##
     sensors:
       custom_thermostat_control_setpoint:
         value_template: >
-          {% if is_state("sensor.primary_thermostat_hvac", "idle") %}
-            0
-          {% elif states("sensor.custom_max_control_setpoint") | float <= 20 %}
-            0
-          {% elif states("sensor.primary_thermostat_current_temperature") |float(default=22) - states("sensor.primary_thermostat_temperature")  | float >= 4 %}           
-            0
-          {% elif is_state("input_select.heating_system", "Radiators ( High Temperatures )") and states("sensor.custom_max_control_setpoint") | float >= 20.01 and states("sensor.custom_max_control_setpoint") | float <= 75 %}
-            {{states("sensor.custom_max_control_setpoint") | float}}
-          {% elif is_state("input_select.heating_system", "Radiators ( High Temperatures )") and states("sensor.custom_max_control_setpoint") | float > 75 %}
-            75.0
-          {% elif is_state("input_select.heating_system", "Radiators ( Low Temperatures )") and states("sensor.custom_max_control_setpoint") | float >= 20.01 and states("sensor.custom_max_control_setpoint") | float <= 55 %}
-            {{states("sensor.custom_max_control_setpoint") | float}}
-          {% elif is_state("input_select.heating_system", "Radiators ( Low Temperatures )") and states("sensor.custom_max_control_setpoint") | float > 55 %}
-            55.0            
-          {% elif is_state("input_select.heating_system", "Underfloor") and states("sensor.custom_max_control_setpoint") | float >= 20.01 and states("sensor.custom_max_control_setpoint") | float <= 55 %}
-            {{states("sensor.custom_max_control_setpoint") | float}}
-          {% elif is_state("input_select.heating_system", "Underfloor") and states("sensor.custom_max_control_setpoint") | float > 55 %}
-            55.0  
+          {% set HeatCurve = states("sensor.heating_curve_value") | float %}
+          {% set P = state_attr("climate.living_room_virtual", "pid_p") | float %}
+          {% set I = state_attr("climate.living_room_virtual", "pid_i") | float %}
+          {% set D = state_attr("climate.living_room_virtual", "pid_d") | float %}
+          {% set CS = ( HeatCurve + P + I + D ) | float | round(1) %}
+          {% set HighTempRad = is_state("input_select.heating_system", "Radiators ( High Temperatures )") %}
+          {% set LowTempRad = is_state("input_select.heating_system", "Radiators ( Low Temperatures )") %}
+          {% set Underfloor = is_state("input_select.heating_system", "Underfloor") %}
+          {% if CS < 10 %}10.0
+          {% elif CS > 75 and HighTempRad %}75.0
+          {% elif CS > 55 and LowTempRad %}55.0
+          {% elif CS > 50 and Underfloor %}50.0
+          {% else %}{{ CS }}
           {% endif %}
-
-          
-        friendly_name: Custom Thermostat Control Setpoint
+        friendly_name: Thermostat Control Setpoint
+        unit_of_measurement: °C
   - platform: template ##Custom Thermostat CH command##
     sensors:
       custom_thermostat_ch_command:
@@ -330,54 +171,6 @@ sensor:
           {% endif %}
         friendly_name: Custom Thermostat CH command
 
-  ################ UNDER DEVELOPMENT ###############
-
-  - platform: template
-    sensors:
-      start_time:
-        value_template: >
-          {% if is_state("sensor.heating_curve_state", "Start Mode") %}
-            {{ "%.0f"%((as_timestamp(now()) - as_timestamp(states.sensor.heating_curve_state.last_changed)) | float / 60 ) }}
-          {% else %}
-            0
-          {% endif %}
-        friendly_name: Start Time
-  - platform: template
-    sensors:
-      transition_time:
-        value_template: >
-          {% if is_state("sensor.heating_curve_state", "Transition Mode") %}
-            {{ "%.0f"%((as_timestamp(now()) - as_timestamp(states.sensor.heating_curve_state.last_changed)) | float / 60 ) }}
-          {% else %}
-            0
-          {% endif %}
-        friendly_name: Transition Time
-  - platform: template
-    sensors:
-      float_time:
-        value_template: >
-          {% if is_state("sensor.heating_curve_state", "Float Mode") %}
-            {{ "%.0f"%((as_timestamp(now()) - as_timestamp(states.sensor.heating_curve_state.last_changed)) | float / 60 ) }}
-          {% else %}
-            0
-          {% endif %}
-        friendly_name: Float Time
-  - platform: template
-    sensors:
-      transition_smooth:
-        value_template: >
-          {% if is_state("sensor.heating_curve_state", "Transition Mode") and states("sensor.derivative_heating_curve") | float(default=0) > 0 and states("sensor.transition_time") | float(default=0) <= 3 %}
-            {{ "%.1f"%(states("sensor.hierarchy_derivative") | float(default=0)) }}
-          {% elif is_state("sensor.heating_curve_state", "Transition Mode") and states("sensor.derivative_heating_curve") | float(default=0) > 0 and states("sensor.transition_time") | float(default=0) > 3 and states("sensor.transition_time") | float(default=0) <= 6 %}
-            {{ "%.1f"%(0.75 * states("sensor.hierarchy_derivative") | float(default=0)) }}
-          {% elif is_state("sensor.heating_curve_state", "Transition Mode") and states("sensor.derivative_heating_curve") | float(default=0) > 0 and states("sensor.transition_time") | float(default=0) > 6 and states("sensor.transition_time") | float(default=0) <= 9 %}
-            {{ "%.1f"%(0.5 * states("sensor.hierarchy_derivative") | float(default=0)) }}
-          {% elif is_state("sensor.heating_curve_state", "Transition Mode") and states("sensor.derivative_heating_curve") | float(default=0) > 0 and states("sensor.transition_time") | float(default=0) > 9 and states("sensor.transition_time") | float(default=0) <= 12 %}
-            {{ "%.1f"%(0.25 * states("sensor.hierarchy_derivative") | float(default=0)) }}
-          {% else %}
-            0
-          {% endif %}
-        friendly_name: Transition Smooth
 
 #############BINARY SENSORS#######################
 
@@ -398,76 +191,17 @@ template:
           {% elif is_state("sensor.primary_thermostat_hvac", "heating") and is_state("binary_sensor.otgw_central_heating_enable", "off") %}off       
           {% else %}off
           {% endif %}
-
+  - binary_sensor:
+      - name: TS Synchro
+        state: >
+          {% if state_attr("climate.opentherm_thermostat", "temperature") | float(default=22) == state_attr("climate.living_room_virtual", "temperature") | float(default=22) %}on
+          {% elif state_attr("climate.opentherm_thermostat", "temperature") | float(default=22) != state_attr("climate.living_room_virtual", "temperature") | float(default=22) %}off
+          {% else %}off
+          {% endif %}
+ 
 #############INPUT SELECT#############################
 
 input_select:
-  starting_heating_curve:
-    name: Starting Heating Curve
-    options:
-      - 0.1
-      - 0.2
-      - 0.3
-      - 0.4
-      - 0.5
-      - 0.6
-      - 0.7
-      - 0.8
-      - 0.9
-      - 1.0
-      - 1.1
-      - 1.2
-      - 1.3
-      - 1.4
-      - 1.5
-      - 1.6
-      - 1.7
-      - 1.8
-      - 1.9
-      - 2.0
-      - 2.1
-      - 2.2
-      - 2.3
-      - 2.4
-      - 2.5
-      - 2.6
-      - 2.7
-      - 2.8
-      - 2.9
-      - 3.0
-  transition_heating_curve:
-    name: Transition Heating Curve
-    options:
-      - 0.1
-      - 0.2
-      - 0.3
-      - 0.4
-      - 0.5
-      - 0.6
-      - 0.7
-      - 0.8
-      - 0.9
-      - 1.0
-      - 1.1
-      - 1.2
-      - 1.3
-      - 1.4
-      - 1.5
-      - 1.6
-      - 1.7
-      - 1.8
-      - 1.9
-      - 2.0
-      - 2.1
-      - 2.2
-      - 2.3
-      - 2.4
-      - 2.5
-      - 2.6
-      - 2.7
-      - 2.8
-      - 2.9
-      - 3.0
   heating_curve:
     name: Heating Curve
     options:
@@ -516,3 +250,27 @@ input_number:
     min: -15
     max: 15
     step: 0.5
+
+############### P I D CALCULATION ############################
+
+climate:
+  - platform: smart_thermostat
+    name: Living Room Virtual
+    unique_id: living_room_virtual
+    heater: input_boolean.living_room_heaters
+    target_sensor: sensor.primary_thermostat_current_temperature
+    min_temp: 7
+    max_temp: 30
+    ac_mode: False
+    target_temp: 22
+    keep_alive:
+      seconds: 600
+    away_temp: 18
+    kp : 30
+    ki : 0.00044
+    kd : 3000
+    pwm : 01:00:00
+
+
+
+
