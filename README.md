@@ -17,3 +17,7 @@ Installation:
 Tuning:
 
 Currently there is no documentation about SAT project but you can join the OTGW-firmware discord server https://discord.gg/TcmTg6BT and you will get the help you need.
+
+
+Note:
+This development is discontinued. The SAT project is evolving and it has it's own Home Assistant custom integration. You can follow the era of this project here https://github.com/Alexwijn/SAT
