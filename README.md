@@ -20,4 +20,4 @@ Currently there is no documentation about SAT project but you can join the OTGW-
 
 
 Note:
-This development is discontinued. The SAT project is evolving and it has it's own Home Assistant custom integration. You can follow the era of this project here https://github.com/Alexwijn/SAT
+This development is discontinued. The SAT project is evolving and it has it's own Home Assistant custom integration. You can follow the new era of this project here https://github.com/Alexwijn/SAT
